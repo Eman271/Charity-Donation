@@ -1,9 +1,9 @@
 services:
   - type: web
     name: charity-donation
-    env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: python init_db.py && gunicorn app:app
     envVars:
       - key: DATABASE_URL
         fromDatabase:
