@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import psycopg2, os
+import psycopg, os
 from functools import wraps
 from config import Config
 from werkzeug.utils import secure_filename
@@ -21,7 +21,7 @@ def allowed_file(filename):
 # DB HELPERS
 # =====================
 def get_db():
-    return psycopg2.connect(os.environ['DATABASE_URL'])
+    return psycopg.connect(os.environ['DATABASE_URL'])
 
 def rows_to_dicts(cursor):
     cols = [col[0] for col in cursor.description]
@@ -229,7 +229,7 @@ def register():
             conn.commit()
             flash('Account created! Please login.', 'success')
             return redirect(url_for('login'))
-        except psycopg2.IntegrityError:
+        except psycopg.IntegrityError:
             conn.rollback()
             flash('Email or Tax ID already registered.', 'danger')
         except Exception as e:
