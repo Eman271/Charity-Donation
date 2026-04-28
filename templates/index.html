@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}HopeLink - Home{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">🌍 Trusted by thousands of donors</div>
+        <h1>Give with purpose.<br><span class="text-accent">Change lives.</span></h1>
+        <p class="hero-sub">HopeLink connects verified NGOs with compassionate donors. Every donation is tracked, transparent, and impactful.</p>
+        <div class="hero-cta">
+            <a href="{{ url_for('campaigns') }}" class="btn-hero">Browse Campaigns</a>
+            {% if not session.get('user_id') %}
+            <a href="{{ url_for('register') }}" class="btn-hero-outline">Join as Donor</a>
+            {% endif %}
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat"><span>{{ total_campaigns }}</span><small>Campaigns</small></div>
+            <div class="hero-stat"><span>{{ verified_ngos }}</span><small>Verified NGOs</small></div>
+            <div class="hero-stat"><span>PKR {{ "{:,.0f}".format(total_raised) }}</span><small>Total Raised</small></div>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="hero-card">
+            <div class="hc-icon">🌱</div>
+            <div class="hc-title">Plant Trees</div>
+            <div class="hc-progress">
+                <div class="hc-bar"><div class="hc-fill" style="width:10%"></div></div>
+                <small>10% funded</small>
+            </div>
+        </div>
+        <div class="hero-card offset">
+            <div class="hc-icon">📚</div>
+            <div class="hc-title">Education Fund</div>
+            <div class="hc-progress">
+                <div class="hc-bar"><div class="hc-fill" style="width:12.5%"></div></div>
+                <small>12.5% funded</small>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-campaigns">
+    <div class="container">
+        <div class="section-header">
+            <h2>Active Campaigns</h2>
+            <a href="{{ url_for('campaigns') }}" class="link-all">View all →</a>
+        </div>
+        <div class="campaign-grid">
+            {% for c in campaigns %}
+            <div class="campaign-card">
+                <div class="campaign-top">
+                    <span class="campaign-ngo">{{ c.NGOName }}</span>
+                    <span class="days-left {% if c.DaysLeft < 10 %}urgent{% endif %}">
+                        {% if c.DaysLeft > 0 %}{{ c.DaysLeft }}d left{% else %}Ended{% endif %}
+                    </span>
+                </div>
+                <h3 class="campaign-title">{{ c.Title }}</h3>
+                <p class="campaign-desc">{{ c.Description[:100] }}{% if c.Description|length > 100 %}...{% endif %}</p>
+                <div class="progress-section">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ [c.ProgressPercent, 100]|min }}%"></div>
+                    </div>
+                    <div class="progress-meta">
+                        <span class="raised">PKR {{ "{:,.0f}".format(c.CurrentAmount) }} raised</span>
+                        <span class="percent">{{ "{:.1f}".format(c.ProgressPercent) }}%</span>
+                    </div>
+                    <div class="goal-text">Goal: PKR {{ "{:,.0f}".format(c.TargetGoal) }}</div>
+                </div>
+                <div class="campaign-actions">
+                    <a href="{{ url_for('campaign_detail', campaign_id=c.CampaignID) }}" class="btn-card-outline">Details</a>
+                    {% if session.get('role') == 'Donor' %}
+                    <a href="{{ url_for('donate', campaign_id=c.CampaignID) }}" class="btn-card">Donate Now</a>
+                    {% elif not session.get('user_id') %}
+                    <a href="{{ url_for('login') }}" class="btn-card">Donate Now</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section-feed">
+    <div class="container">
+        <div class="section-header">
+            <h2>Recent Donations</h2>
+            <span class="live-dot">● Live</span>
+        </div>
+        <div class="feed-list">
+            {% for d in recent %}
+            <div class="feed-item">
+                <div class="feed-avatar">{{ d.DonorName[0] }}</div>
+                <div class="feed-info">
+                    <strong>{{ d.DonorName }}</strong> donated to <em>{{ d.CampaignTitle }}</em>
+                    <small>{{ d.DonationDate.strftime('%b %d, %Y') if d.DonationDate else '' }}</small>
+                </div>
+                <div class="feed-amount">PKR {{ "{:,.0f}".format(d.Amount) }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section-trust">
+    <div class="container">
+        <h2>Why HopeLink?</h2>
+        <div class="trust-grid">
+            <div class="trust-card">
+                <div class="trust-icon">✅</div>
+                <h3>Verified NGOs</h3>
+                <p>Every organization is reviewed and approved before going live.</p>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon">📊</div>
+                <h3>Full Transparency</h3>
+                <p>Track exactly where every dollar goes with real-time updates.</p>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon">🔒</div>
+                <h3>Secure Donations</h3>
+                <p>Your data and transactions are always protected.</p>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted || window.performance.navigation.type === 2) {
+        location.reload();
+    }
+});
+</script>
+{% endblock %}

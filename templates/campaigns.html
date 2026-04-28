@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Campaigns - Hope{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div class="container">
+        <h1>All Campaigns</h1>
+        <p>Support causes that matter to you</p>
+    </div>
+</div>
+
+<div class="container" style="padding-top:2rem;">
+    <form method="GET" class="search-bar">
+        <input type="text" name="q" placeholder="Search campaigns..." value="{{ search }}" class="search-input">
+        <button type="submit" class="btn-search">🔍 Search</button>
+        {% if search %}
+        <a href="{{ url_for('campaigns') }}" class="btn-clear">✕ Clear</a>
+        {% endif %}
+    </form>
+
+    {% if search %}
+    <p style="color:var(--muted);margin-bottom:1rem;font-size:.9rem;">
+        Showing results for <strong>"{{ search }}"</strong> — {{ campaigns|length }} found
+    </p>
+    {% endif %}
+
+    {% if campaigns %}
+    <div class="campaign-grid">
+        {% for c in campaigns %}
+        <div class="campaign-card">
+            <div class="campaign-top">
+                <span class="campaign-ngo">{{ c.NGOName }}</span>
+                <span class="days-left {% if c.DaysLeft and c.DaysLeft < 10 %}urgent{% endif %}">
+                    {% if c.DaysLeft and c.DaysLeft > 0 %}{{ c.DaysLeft }}d left{% else %}Ended{% endif %}
+                </span>
+            </div>
+            <h3 class="campaign-title">{{ c.Title }}</h3>
+            <p class="campaign-desc">{{ c.Description[:120] if c.Description else '' }}{% if c.Description and c.Description|length > 120 %}...{% endif %}</p>
+            <div class="progress-section">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ [c.ProgressPercent, 100]|min }}%"></div>
+                </div>
+                <div class="progress-meta">
+                    <span class="raised">PKR {{ "{:,.0f}".format(c.CurrentAmount) }}</span>
+                    <span class="percent">{{ "{:.1f}".format(c.ProgressPercent) }}%</span>
+                </div>
+                <div class="goal-text">of PKR {{ "{:,.0f}".format(c.TargetGoal) }} goal</div>
+            </div>
+            <div class="campaign-actions">
+                <a href="{{ url_for('campaign_detail', campaign_id=c.CampaignID) }}" class="btn-card-outline">View Details</a>
+                {% if session.get('role') == 'Donor' %}
+                <a href="{{ url_for('donate', campaign_id=c.CampaignID) }}" class="btn-card">Donate</a>
+                {% elif not session.get('user_id') %}
+                <a href="{{ url_for('login') }}" class="btn-card">Login to Donate</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div style="font-size:3rem">🔍</div>
+        <h3>No campaigns found</h3>
+        <p>Try a different search term or <a href="{{ url_for('campaigns') }}">view all campaigns</a>.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Edit Campaign - Hope{% endblock %}
+{% block content %}
+
+<div class="container" style="max-width:600px; padding-top:2rem;">
+    <a href="{{ url_for('ngo_dashboard') }}" class="back-link">← Back to Dashboard</a>
+    <div class="auth-card" style="max-width:100%; margin-top:1rem;">
+        <h2>Edit Campaign</h2>
+        <p class="auth-sub">Update your campaign details</p>
+
+        <form method="POST" class="auth-form" id="editCampaignForm">
+            <div class="form-group">
+                <label>Campaign Title</label>
+                <input type="text" name="title" value="{{ campaign.Title }}" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4">{{ campaign.Description }}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Fundraising Goal (PKR)</label>
+                <input type="number" name="target_goal" value="{{ campaign.TargetGoal }}" min="1" step="0.01" required>
+                <small style="color:#6b7280;font-size:.8rem;">
+                    Currently raised: PKR {{ "{:,.0f}".format(campaign.CurrentAmount) }}
+                </small>
+            </div>
+            <div class="form-group">
+                <label>End Date</label>
+                <input type="date" name="end_date" id="endDate"
+                    value="{{ campaign.EndDate.strftime('%Y-%m-%d') if campaign.EndDate else '' }}">
+                <small id="dateError" style="color:#ef4444;display:none;">End date must be in the future.</small>
+            </div>
+            <button type="submit" class="btn-submit">💾 Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('editCampaignForm').addEventListener('submit', function(e) {
+    const end   = document.getElementById('endDate').value;
+    const today = new Date().toISOString().split('T')[0];
+    if (end && end < today) {
+        e.preventDefault();
+        document.getElementById('dateError').style.display = 'block';
+        document.getElementById('endDate').style.border = '1.5px solid #ef4444';
+    }
+});
+</script>
+
+{% endblock %}

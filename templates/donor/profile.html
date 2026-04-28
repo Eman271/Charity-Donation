@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Hope{% endblock %}
+{% block content %}
+
+<div class="container" style="max-width:600px; padding-top:2rem;">
+    <a href="{{ url_for('donor_dashboard') }}" class="back-link">← Back to Dashboard</a>
+
+    <div class="auth-card" style="margin-top:1.5rem;">
+        <div class="auth-logo"><span class="logo-icon">❤</span> My Profile</div>
+        <h2>Edit Your Profile</h2>
+        <p class="auth-sub">Keep your details up to date</p>
+
+        <!-- Profile Picture Display -->
+        <div style="text-align:center; margin-bottom:1.5rem;">
+            {% if profile.ProfilePicture %}
+            <img src="{{ url_for('static', filename='uploads/' + profile.ProfilePicture) }}"
+                alt="Profile Picture"
+                style="width:100px;height:100px;border-radius:50%;object-fit:cover;
+                border:3px solid #22c55e;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            {% else %}
+            <div style="width:100px;height:100px;border-radius:50%;
+                background:linear-gradient(135deg,#22c55e,#16a34a);
+                display:inline-flex;align-items:center;justify-content:center;
+                font-size:2.5rem;color:#fff;font-weight:700;
+                box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                {{ profile.FullName[0] | upper }}
+            </div>
+            {% endif %}
+            <div style="margin-top:.75rem;">
+                <span style="background:#f0fdf4;color:#166534;padding:.3rem .75rem;
+                    border-radius:20px;font-size:.8rem;font-weight:600;">
+                    ❤ Donor
+                </span>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="auth-form">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="full_name" value="{{ profile.FullName }}" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" value="{{ profile.Email }}" disabled
+                    style="background:#f9fafb;color:#6b7280;cursor:not-allowed;">
+                <small style="color:#9ca3af;font-size:.8rem;">Email cannot be changed.</small>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone" placeholder="+92 300 0000000"
+                    value="{{ profile.Phone or '' }}">
+            </div>
+            <div class="form-group">
+                <label>City / Location</label>
+                <input type="text" name="address" placeholder="e.g. Lahore, Pakistan"
+                    value="{{ profile.Address or '' }}">
+            </div>
+            <div class="form-group">
+                <label>Profile Picture</label>
+                <input type="file" name="profile_picture" accept="image/*"
+                    style="padding:.5rem;border:1.5px dashed #d1d5db;border-radius:8px;
+                    width:100%;box-sizing:border-box;cursor:pointer;">
+                <small style="color:#9ca3af;font-size:.8rem;">
+                    JPG, PNG or GIF. Max 2MB recommended.
+                </small>
+            </div>
+            <button type="submit" class="btn-submit">💾 Save Changes</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

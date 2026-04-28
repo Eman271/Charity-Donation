@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}NGO Dashboard - Hope{% endblock %}
+{% block content %}
+
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-user">
+            <div class="sidebar-avatar">{{ session.full_name[0] | upper }}</div>
+            <div class="sidebar-name">{{ session.full_name }}</div>
+            <div class="sidebar-role">NGO</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('ngo_dashboard') }}" class="active">📊 Dashboard</a>
+            <a href="{{ url_for('ngo_create_campaign') }}">➕ New Campaign</a>
+            <a href="{{ url_for('ngo_profile') }}">👤 Profile</a>
+            <button onclick="showLogoutModal()" class="sidebar-logout">🚪 Logout</button>
+        </nav>
+    </aside>
+
+    <div class="dashboard-main">
+        <div class="dash-header">
+            <h1>Welcome, {{ session.full_name }}! 👋</h1>
+            <p>Manage your campaigns and track donations.</p>
+        </div>
+
+        {% if not is_verified %}
+        <div class="alert-banner">
+            ⚠ Your NGO is pending admin verification. You cannot create campaigns until approved.
+        </div>
+        {% endif %}
+
+        <!-- STATS -->
+        <div class="stats-grid">
+            <div class="stat-card stat-green">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value">PKR {{ "{:,.0f}".format(stats.get('TotalRaised', 0)) }}</div>
+                <div class="stat-label">Total Raised</div>
+            </div>
+            <div class="stat-card stat-blue">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value">{{ stats.get('TotalCampaigns', 0) }}</div>
+                <div class="stat-label">Campaigns</div>
+            </div>
+            <div class="stat-card stat-teal">
+                <div class="stat-icon">📈</div>
+                <div class="stat-value">
+                    {% if stats.get('TotalGoal', 0) > 0 %}
+                        {{ "{:.1f}".format(stats.get('TotalRaised', 0) * 100 / stats.get('TotalGoal', 1)) }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </div>
+                <div class="stat-label">Overall Progress</div>
+            </div>
+        </div>
+
+        <!-- CAMPAIGNS TABLE -->
+        <div class="dash-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h2>Your Campaigns</h2>
+                {% if is_verified %}
+                <a href="{{ url_for('ngo_create_campaign') }}" class="btn-hero" style="padding:0.6rem 1.2rem; font-size:0.9rem;">+ New Campaign</a>
+                {% endif %}
+            </div>
+
+            {% if campaigns %}
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Campaign</th>
+                            <th>Progress</th>
+                            <th>Status</th>
+                            <th>Raised</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in campaigns %}
+                        <tr>
+                            <td><strong>{{ c.Title }}</strong></td>
+                            <td style="min-width:150px;">
+                                <div class="progress-bar" style="margin:0.25rem 0;">
+                                    <div class="progress-fill" style="width:{{ [c.CompletionPercent, 100]|min }}%;"></div>
+                                </div>
+                                <small>{{ "{:.1f}".format(c.CompletionPercent) }}%</small>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ c.Status.lower().replace(' ', '-') }}">{{ c.Status }}</span>
+                            </td>
+                            <td class="amount-cell">PKR {{ "{:,.0f}".format(c.CurrentAmount) }}</td>
+                            <td>
+                                <a href="{{ url_for('ngo_edit_campaign', campaign_id=c.CampaignID) }}" class="btn-table">Edit</a>
+                                <a href="{{ url_for('add_beneficiary', campaign_id=c.CampaignID) }}" class="btn-table">+ Beneficiary</a>
+                                <form method="POST" action="{{ url_for('ngo_delete_campaign', campaign_id=c.CampaignID) }}" style="display:inline;" onsubmit="return confirm('Delete this campaign?');">
+                                    <button type="submit" class="btn-table btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <div style="font-size:2rem;">🎯</div>
+                <p style="margin-top:0.5rem;">No campaigns yet.
+                    {% if is_verified %}
+                    <a href="{{ url_for('ngo_create_campaign') }}">Create your first campaign!</a>
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- RECENT DONATIONS -->
+        <div class="dash-panel">
+            <h2>Recent Donations to Your Campaigns</h2>
+            {% if recent_donations %}
+            <div class="feed-list">
+                {% for d in recent_donations %}
+                <div class="feed-item">
+                    <div class="feed-avatar">{{ d.DonorName[0] | upper }}</div>
+                    <div class="feed-info">
+                        <strong>{{ d.DonorName }}</strong> donated to <em>{{ d.CampaignTitle }}</em>
+                        <small>{{ d.DonationDate.strftime('%b %d, %Y') if d.DonationDate else '' }}</small>
+                    </div>
+                    <div class="feed-amount">PKR {{ "{:,.0f}".format(d.Amount) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                <p style="color:var(--muted);">No donations received yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

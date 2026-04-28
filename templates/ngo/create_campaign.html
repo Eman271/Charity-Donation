@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Create Campaign - Hope{% endblock %}
+{% block content %}
+
+<div class="container" style="max-width:600px; padding-top:2rem;">
+    <a href="{{ url_for('ngo_dashboard') }}" class="back-link">← Back to Dashboard</a>
+    <div class="auth-card" style="max-width:100%; margin-top:1rem;">
+        <h2>Create New Campaign</h2>
+        <p class="auth-sub">Launch a fundraising campaign for your cause</p>
+        <form method="POST" class="auth-form" id="createCampaignForm">
+            <div class="form-group">
+                <label>Campaign Title</label>
+                <input type="text" name="title" placeholder="e.g. Plant 10,000 Trees" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Describe your campaign and its impact..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Fundraising Goal (PKR)</label>
+                <input type="number" name="target_goal" min="1" step="0.01" placeholder="50000" required>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" id="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" name="end_date" id="endDate" required>
+                    <small id="dateError" style="color:#ef4444;display:none;">End date must be after start date.</small>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">🚀 Launch Campaign</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Set min date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('startDate').min = today;
+document.getElementById('endDate').min = today;
+
+document.getElementById('startDate').addEventListener('change', function() {
+    document.getElementById('endDate').min = this.value;
+});
+
+document.getElementById('createCampaignForm').addEventListener('submit', function(e) {
+    const start = document.getElementById('startDate').value;
+    const end   = document.getElementById('endDate').value;
+    if (start && end && end <= start) {
+        e.preventDefault();
+        document.getElementById('dateError').style.display = 'block';
+        document.getElementById('endDate').style.border = '1.5px solid #ef4444';
+    }
+});
+</script>
+
+{% endblock %}

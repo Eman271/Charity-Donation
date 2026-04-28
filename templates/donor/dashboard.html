@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}My Dashboard - Hope{% endblock %}
+{% block content %}
+
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-user">
+            {% if session.get('profile_picture') %}
+            <img src="{{ url_for('static', filename='uploads/' + session.get('profile_picture')) }}"
+                style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid #22c55e;margin-bottom:.5rem;">
+            {% else %}
+            <div class="sidebar-avatar">{{ session.full_name[0] | upper }}</div>
+            {% endif %}
+            <div class="sidebar-name">{{ session.full_name }}</div>
+            <div class="sidebar-role">Donor</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('donor_dashboard') }}" class="active">📊 Dashboard</a>
+            <a href="{{ url_for('campaigns') }}">🎯 Browse Campaigns</a>
+            <a href="{{ url_for('donor_profile') }}">👤 My Profile</a>
+            <a href="{{ url_for('change_password') }}">🔑 Change Password</a>
+            <button onclick="showLogoutModal()" class="sidebar-logout">🚪 Logout</button>
+        </nav>
+    </aside>
+
+    <div class="dashboard-main">
+        <div class="dash-header">
+            <h1>Welcome back, {{ session.full_name }}! 👋</h1>
+            <p>Here's your giving impact at a glance.</p>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+            <div class="stat-card stat-green">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value">PKR {{ "{:,.0f}".format(summary.get('TotalAmountDonated', 0)) }}</div>
+                <div class="stat-label">Total Donated</div>
+            </div>
+            <div class="stat-card stat-blue">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value">{{ summary.get('TotalDonations', 0) }}</div>
+                <div class="stat-label">Donations Made</div>
+            </div>
+            <div class="stat-card stat-teal">
+                <div class="stat-icon">🏢</div>
+                <div class="stat-value">{{ ngos_supported }}</div>
+                <div class="stat-label">NGOs Supported</div>
+            </div>
+        </div>
+
+        <!-- TOP ROW: HISTORY + LIVE FEED -->
+        <div class="dash-grid">
+            <div class="dash-panel">
+                <h2>Your Donation History</h2>
+                {% if history %}
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Campaign</th><th>NGO</th><th>Amount</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for d in history %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('campaign_detail', campaign_id=d.CampaignID) }}"
+                                        style="color:var(--green);font-weight:600;">
+                                        {{ d.Title }}
+                                    </a>
+                                    <div class="progress-bar" style="margin-top:.3rem;">
+                                        {% set pct = [d.ProgressPercent, 100]|min|int %}
+                                        <div class="progress-fill" style="width:{{ pct }}%"></div>
+                                    </div>
+                                </td>
+                                <td style="color:var(--muted);font-size:.85rem;">{{ d.NGOName }}</td>
+                                <td class="amount-cell">PKR {{ "{:,.0f}".format(d.Amount) }}</td>
+                                <td style="color:var(--muted);font-size:.83rem;">
+                                    {{ d.DonationDate.strftime('%b %d, %Y') if d.DonationDate else '—' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state small">
+                    <div style="font-size:2rem;">🎯</div>
+                    <p style="margin-top:.5rem;">No donations yet.<br>
+                    <a href="{{ url_for('campaigns') }}">Browse campaigns</a> to get started!</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dash-panel">
+                <h2>Live Donation Feed <span class="live-dot">● Live</span></h2>
+                <div class="feed-list">
+                    {% for d in recent %}
+                    <div class="feed-item">
+                        <div class="feed-avatar">{{ d.DonorName[0] | upper }}</div>
+                        <div class="feed-info">
+                            <strong>{{ d.DonorName }}</strong> donated to
+                            <em>{{ d.CampaignTitle }}</em>
+                            <small>{{ d.DonationDate.strftime('%b %d, %Y') if d.DonationDate else '' }}</small>
+                        </div>
+                        <div class="feed-amount">PKR {{ "{:,.0f}".format(d.Amount) }}</div>
+                    </div>
+                    {% else %}
+                    <p style="color:var(--muted); font-size:.9rem;">No recent activity.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- SUGGESTED CAMPAIGNS -->
+        {% if suggested %}
+        <div class="dash-panel" style="margin-top:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+                <h2>Campaigns You Haven't Supported Yet</h2>
+                <a href="{{ url_for('campaigns') }}" class="link-all">View all →</a>
+            </div>
+            <div class="campaign-grid">
+                {% for c in suggested %}
+                <div class="campaign-card">
+                    <div class="campaign-top">
+                        <span class="campaign-ngo">{{ c.NGOName }}</span>
+                        <span class="days-left {% if c.DaysLeft and c.DaysLeft < 10 %}urgent{% endif %}">
+                            {% if c.DaysLeft and c.DaysLeft > 0 %}{{ c.DaysLeft }}d left{% else %}Ended{% endif %}
+                        </span>
+                    </div>
+                    <h3 class="campaign-title">{{ c.Title }}</h3>
+                    <p class="campaign-desc">
+                        {{ c.Description[:100] if c.Description else '' }}
+                        {% if c.Description and c.Description|length > 100 %}...{% endif %}
+                    </p>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            {% set cpct = [c.ProgressPercent, 100]|min|int %}
+                            <div class="progress-fill" style="width:{{ cpct }}%"></div>
+                        </div>
+                        <div class="progress-meta">
+                            <span class="raised">PKR {{ "{:,.0f}".format(c.CurrentAmount) }}</span>
+                            <span class="percent">{{ "{:.1f}".format(c.ProgressPercent) }}%</span>
+                        </div>
+                    </div>
+                    <div class="campaign-actions">
+                        <a href="{{ url_for('campaign_detail', campaign_id=c.CampaignID) }}"
+                            class="btn-card-outline">Details</a>
+                        <a href="{{ url_for('donate', campaign_id=c.CampaignID) }}"
+                            class="btn-card">Donate</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

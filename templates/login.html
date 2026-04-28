@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Login - HopeLink{% endblock %}
+{% block content %}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-logo"><span class="logo-icon">❤</span> HopeLink</div>
+        <h2>Welcome back</h2>
+        <p class="auth-sub">Login to your account</p>
+
+        <form method="POST" class="auth-form" id="loginForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="password-wrap">
+                    <input type="password" name="password" id="loginPassword" placeholder="••••••••" required>
+                    <button type="button" class="eye-btn" onclick="togglePassword('loginPassword', this)" aria-label="Toggle password">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <small id="loginPassError" style="color:#ef4444;display:none;margin-top:4px;">
+                    Password must be at least 8 characters and include a symbol (e.g. @, #, !)
+                </small>
+            </div>
+            <button type="submit" class="btn-submit">Login</button>
+        </form>
+
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginPassError');
+    const hasMinLength = password.length >= 8;
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    if (!hasMinLength || !hasSymbol) {
+        e.preventDefault();
+        errorEl.style.display = 'block';
+        document.getElementById('loginPassword').style.border = '1.5px solid #ef4444';
+    } else {
+        errorEl.style.display = 'none';
+        document.getElementById('loginPassword').style.border = '';
+    }
+});
+
+document.getElementById('loginPassword').addEventListener('input', function() {
+    const hasMinLength = this.value.length >= 8;
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(this.value);
+    const errorEl = document.getElementById('loginPassError');
+    if (hasMinLength && hasSymbol) {
+        errorEl.style.display = 'none';
+        this.style.border = '1.5px solid #22c55e';
+    } else {
+        this.style.border = '1.5px solid #ef4444';
+    }
+});
+</script>
+<div style="text-align:center; margin-top:1rem; padding-top:1rem;
+    border-top: 1px solid #e5e7eb;">
+    <a href="{{ url_for('admin_login') }}"
+        style="color:#6b7280; font-size:.82rem; text-decoration:none;
+        display:inline-flex; align-items:center; gap:.3rem;">
+        🔐 Admin Portal
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Campaigns</h2>
+
+{% for c in campaigns %}
+<div class="card">
+    <h3>{{c.Title}}</h3>
+
+    <div class="progress">
+        <div class="bar" style="width: {{ (c.CurrentAmount/c.TargetGoal)*100 }}%"></div>
+    </div>
+
+    <form method="POST" action="/donate/{{c.CampaignID}}">
+        <input name="amount" placeholder="Amount">
+        <button>Donate</button>
+    </form>
+</div>
+{% endfor %}
+
+{% endblock %}

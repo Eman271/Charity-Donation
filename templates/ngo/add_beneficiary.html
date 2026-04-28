@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Add Beneficiary - Hope{% endblock %}
+{% block content %}
+
+<div class="container" style="max-width:500px; padding-top:2rem;">
+    <a href="{{ url_for('ngo_dashboard') }}" class="back-link">← Back to Dashboard</a>
+    <div class="auth-card" style="max-width:100%; margin-top:1rem;">
+        <div class="auth-logo"><span class="logo-icon">❤</span> HopeLink</div>
+        <h2>Add Beneficiary</h2>
+        <p class="auth-sub">Who will benefit from this campaign?</p>
+
+        <form method="POST" class="auth-form" id="beneficiaryForm">
+            <div class="form-group">
+                <label>Beneficiary Name</label>
+                <input type="text" name="name" placeholder="Organization or individual name" required
+                    id="benName">
+                <small id="nameError" style="color:#ef4444;display:none;">Name is required.</small>
+            </div>
+            <div class="form-group">
+                <label>Details</label>
+                <textarea name="details" rows="3"
+                    placeholder="Describe how they benefit from this campaign..."></textarea>
+            </div>
+            <button type="submit" class="btn-submit">✅ Add Beneficiary</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('beneficiaryForm').addEventListener('submit', function(e) {
+    const name = document.getElementById('benName').value.trim();
+    if (!name) {
+        e.preventDefault();
+        document.getElementById('nameError').style.display = 'block';
+        document.getElementById('benName').style.border = '1.5px solid #ef4444';
+    }
+});
+document.getElementById('benName').addEventListener('input', function() {
+    if (this.value.trim()) {
+        document.getElementById('nameError').style.display = 'none';
+        this.style.border = '1.5px solid #22c55e';
+    }
+});
+</script>
+
+{% endblock %}

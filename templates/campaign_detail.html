@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}{{ campaign.Title }} - Hope{% endblock %}
+{% block content %}
+
+<div class="container" style="padding-top:2rem; max-width:900px;">
+    <a href="{{ url_for('campaigns') }}" class="back-link">← Back to Campaigns</a>
+
+    <div class="detail-card">
+        <div class="detail-header">
+            <div>
+                <span class="campaign-ngo">{{ campaign.NGOName }}</span>
+                <h1 class="detail-title">{{ campaign.Title }}</h1>
+            </div>
+            <span class="days-left {% if campaign.DaysLeft and campaign.DaysLeft < 10 %}urgent{% endif %}"
+                style="font-size:1rem;padding:.5rem 1rem;">
+                {% if campaign.DaysLeft and campaign.DaysLeft > 0 %}
+                    {{ campaign.DaysLeft }} days left
+                {% else %}
+                    Campaign Ended
+                {% endif %}
+            </span>
+        </div>
+
+        <p class="detail-desc">{{ campaign.Description }}</p>
+
+        <div class="detail-progress">
+            <div class="detail-amounts">
+                <div>
+                    <div class="amount-big">PKR {{ "{:,.0f}".format(campaign.CurrentAmount) }}</div>
+                    <small>raised of PKR {{ "{:,.0f}".format(campaign.TargetGoal) }} goal</small>
+                </div>
+                <div class="pct-big">{{ "{:.1f}".format(campaign.ProgressPercent) }}%</div>
+            </div>
+            <div class="progress-bar progress-bar-lg">
+                <div class="progress-fill" style="width: {{ [campaign.ProgressPercent, 100]|min }}%"></div>
+            </div>
+            <div class="detail-dates">
+                <span>📅 Ends: {{ campaign.EndDate }}</span>
+            </div>
+        </div>
+
+        {% if session.get('role') == 'Donor' %}
+        <a href="{{ url_for('donate', campaign_id=campaign.CampaignID) }}"
+            class="btn-hero" style="display:inline-block;margin-top:1.5rem;">
+            ❤ Donate to this Campaign
+        </a>
+        {% elif not session.get('user_id') %}
+        <a href="{{ url_for('login') }}"
+            class="btn-hero" style="display:inline-block;margin-top:1.5rem;">
+            Login to Donate
+        </a>
+        {% elif session.get('role') == 'NGO' or session.get('role') == 'Admin' %}
+        <div style="margin-top:1rem;padding:.75rem 1rem;background:#f0fdf4;border-radius:10px;color:#166534;font-size:.9rem;">
+            ℹ️ Only donors can contribute to campaigns.
+        </div>
+        {% endif %}
+    </div>
+
+    {% if beneficiaries %}
+    <div class="detail-section">
+        <h2>🤝 Beneficiaries</h2>
+        <div class="bene-list">
+            {% for b in beneficiaries %}
+            <div class="bene-card">
+                <div class="bene-name">{{ b.BeneficiaryName }}</div>
+                <div class="bene-details">{{ b.Details }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if donations %}
+    <div class="detail-section">
+        <h2>💰 Donor Activity</h2>
+        <div class="donor-table-wrap">
+            <table class="donor-table">
+                <thead>
+                    <tr><th>Donor</th><th>Amount</th><th>Date</th></tr>
+                </thead>
+                <tbody>
+                    {% for d in donations %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:.5rem;">
+                                <div class="feed-avatar" style="width:28px;height:28px;font-size:.75rem;">
+                                    {{ d.FullName[0] | upper }}
+                                </div>
+                                {{ d.FullName }}
+                            </div>
+                        </td>
+                        <td style="color:#16a34a;font-weight:600;">PKR {{ "{:,.0f}".format(d.Amount) }}</td>
+                        <td style="color:var(--muted);font-size:.85rem;">
+                            {{ d.DonationDate.strftime('%b %d, %Y') if d.DonationDate else '' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="detail-section">
+        <h2>💰 Donor Activity</h2>
+        <div class="empty-state small">
+            <p style="color:var(--muted);">No donations yet. Be the first to contribute! ❤</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

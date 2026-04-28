@@ -1,0 +1,248 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Dashboard — HopeLink{% endblock %}
+{% block content %}
+
+<div class="dashboard-layout">
+    <aside class="sidebar sidebar-admin">
+        <div class="sidebar-user">
+            <div class="sidebar-avatar" style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);">
+                {{ session.full_name[0] | upper }}
+            </div>
+            <div class="sidebar-name">{{ session.full_name }}</div>
+            <div class="sidebar-role">Administrator</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#overview">📊 Overview</a>
+            <a href="#ngos">🏢 NGO Verification</a>
+            <a href="#campaigns">🎯 Campaigns</a>
+            <a href="#users">👥 Users</a>
+            <a href="#donations">💰 Donations</a>
+            <a href="{{ url_for('change_password') }}">🔑 Change Password</a>
+            <a href="{{ url_for('logout') }}">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <div class="dashboard-main">
+
+        <!-- OVERVIEW -->
+        <div class="dash-header" id="overview">
+            <h1>Admin Dashboard</h1>
+            <p>Full system control and monitoring</p>
+        </div>
+
+        {% if pending_ngos > 0 %}
+        <div class="alert-banner">
+            ⚠️ <strong>{{ pending_ngos }} NGO(s)</strong> are pending verification.
+            <a href="#ngos" style="color:#9a3412;text-decoration:underline;font-weight:600;">Review now →</a>
+        </div>
+        {% endif %}
+
+        <div class="stats-grid stats-4">
+            <div class="stat-card stat-blue">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value">{{ total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card stat-teal">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value">{{ total_campaigns }}</div>
+                <div class="stat-label">Campaigns</div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value">PKR {{ "{:,.0f}".format(total_donated) }}</div>
+                <div class="stat-label">Total Donated</div>
+            </div>
+            <div class="stat-card stat-orange">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value">{{ verified_ngos }}</div>
+                <div class="stat-label">Verified NGOs</div>
+            </div>
+        </div>
+
+        <!-- NGO VERIFICATION -->
+        <div class="dash-panel" id="ngos">
+            <h2>NGO Verification</h2>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Email</th>
+                            <th>Tax ID</th>
+                            <th>Mission</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in ngos %}
+                        <tr>
+                            <td><strong>{{ n.FullName }}</strong></td>
+                            <td style="color:var(--muted);font-size:.85rem;">{{ n.Email }}</td>
+                            <td style="font-size:.82rem;">{{ n.TaxID }}</td>
+                            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem;color:var(--text-2);">
+                                {{ n.Mission or '—' }}
+                            </td>
+                            <td>
+                                {% if n.IsVerified %}
+                                <span class="status-badge status-completed">✅ Verified</span>
+                                {% else %}
+                                <span class="status-badge status-not-started">⏳ Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('verify_ngo', ngo_id=n.NGOID) }}" style="display:inline;">
+                                    {% if not n.IsVerified %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn-table btn-success">Approve</button>
+                                    {% else %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn-table btn-warning" onclick="return confirm('Revoke verification for this NGO?')">Revoke</button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NGO PERFORMANCE STATS -->
+        <div class="dash-panel">
+            <h2>NGO Performance</h2>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>NGO</th><th>Campaigns</th><th>Goal</th><th>Raised</th><th>Progress</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for s in ngo_stats %}
+                        <tr>
+                            <td><strong>{{ s.NGOName }}</strong></td>
+                            <td>{{ s.TotalCampaigns }}</td>
+                            <td>PKR {{ "{:,.0f}".format(s.TotalGoal) }}</td>
+                            <td class="amount-cell">PKR {{ "{:,.0f}".format(s.TotalRaised) }}</td>
+                            <td style="min-width:140px;">
+                                {% if s.TotalGoal > 0 %}
+                                {% set pct = (s.TotalRaised * 100 / s.TotalGoal) %}
+                                <div class="progress-bar"><div class="progress-fill" style="width:{{ [pct, 100]|min }}%"></div></div>
+                                <small style="color:var(--muted);">{{ "{:.1f}".format(pct) }}%</small>
+                                {% else %}
+                                <span style="color:var(--muted);font-size:.82rem;">No campaigns</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ALL CAMPAIGNS -->
+        <div class="dash-panel" id="campaigns">
+            <h2>All Campaigns</h2>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Title</th><th>NGO</th><th>Goal</th><th>Raised</th><th>Progress</th><th>Dates</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in all_campaigns %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('campaign_detail', campaign_id=c.CampaignID) }}" style="color:var(--green);font-weight:600;">
+                                    {{ c.Title }}
+                                </a>
+                            </td>
+                            <td style="color:var(--muted);font-size:.85rem;">{{ c.NGOName }}</td>
+                            <td>PKR {{ "{:,.0f}".format(c.TargetGoal) }}</td>
+                            <td class="amount-cell">PKR {{ "{:,.0f}".format(c.CurrentAmount) }}</td>
+                            <td style="min-width:120px;">
+                                <div class="progress-bar"><div class="progress-fill" style="width:{{ [c.ProgressPercent, 100]|min }}%"></div></div>
+                                <small style="color:var(--muted);">{{ "{:.1f}".format(c.ProgressPercent) }}%</small>
+                            </td>
+                            <td style="font-size:.8rem;color:var(--muted);">
+                                {{ c.StartDate }} → {{ c.EndDate }}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin_delete_campaign', campaign_id=c.CampaignID) }}" style="display:inline;" onsubmit="return confirm('Delete campaign \'{{ c.Title }}\'?')">
+                                    <button type="submit" class="btn-table btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ALL USERS -->
+        <div class="dash-panel" id="users">
+            <h2>All Users</h2>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td><strong>{{ u.FullName }}</strong></td>
+                            <td style="color:var(--muted);font-size:.85rem;">{{ u.Email }}</td>
+                            <td>
+                                <span class="role-badge role-{{ u.UserRole | lower }}">{{ u.UserRole }}</span>
+                            </td>
+                            <td style="color:var(--muted);font-size:.83rem;">
+                                {{ u.CreatedAt.strftime('%b %d, %Y') if u.CreatedAt else '—' }}
+                            </td>
+                            <td>
+                                {% if u.UserID != session.user_id %}
+                                <form method="POST" action="{{ url_for('admin_delete_user', user_id=u.UserID) }}" style="display:inline;" onsubmit="return confirm('Delete user {{ u.FullName }}?')">
+                                    <button type="submit" class="btn-table btn-danger">Delete</button>
+                                </form>
+                                {% else %}
+                                <span style="color:var(--muted);font-size:.8rem;font-style:italic;">You</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RECENT DONATIONS -->
+        <div class="dash-panel" id="donations">
+            <h2>Recent Donations</h2>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Donor</th><th>Campaign</th><th>Amount</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for d in recent_donations %}
+                        <tr>
+                            <td>
+                                <div class="feed-avatar" style="width:28px;height:28px;font-size:.75rem;display:inline-flex;vertical-align:middle;margin-right:.5rem;">
+                                    {{ d.DonorName[0] | upper }}
+                                </div>
+                                {{ d.DonorName }}
+                            </td>
+                            <td style="color:var(--text-2);">{{ d.CampaignTitle }}</td>
+                            <td class="amount-cell">PKR {{ "{:,.0f}".format(d.Amount) }}</td>
+                            <td style="color:var(--muted);font-size:.83rem;">
+                                {{ d.DonationDate.strftime('%b %d, %Y') if d.DonationDate else '—' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
